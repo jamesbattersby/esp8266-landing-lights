@@ -1,3 +1,7 @@
+<p align=center>
+<a href="https://travis-ci.org/jamesbattersby/esp8266-landing-lights"><img src="https://travis-ci.org/jamesbattersby/esp8266-landing-lights.svg?branch=master" alt="Build Status"></a>
+</p>
+
 # Landing Lights
 
 This is a simple project that uses an ESP8266, HCSR04 ultrasonic sensor and a strip of WS2811 LEDs to produce a garage parking sensor.  As you
