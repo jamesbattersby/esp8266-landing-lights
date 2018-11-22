@@ -26,7 +26,7 @@ Only two additional libraries are required:
 FastLED is required to drive the LED strip, and xxtea-lib is used to provide some protection for your wifi details.
 
 ### Configure Wifi Access
-A template wifi config file is provided.  This file will eventaully contain your encrypted wifi details.  Firstly copy the `include/wifiConfig.tmp`l file to `include/wifiConfig.h`, edit it and add the following detials:
+A template wifi config file is provided.  This file will eventaully contain your encrypted wifi details.  Firstly copy the `include/wifiConfig.tmpl` file to `include/wifiConfig.h`, edit it and add the following detials:
 
 - `SSID` - The SSID of your wifi network
 - `WIFI_PASSWORD` - The access password
