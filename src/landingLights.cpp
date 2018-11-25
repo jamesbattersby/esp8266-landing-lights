@@ -26,7 +26,7 @@
 #define RED_FLASH_THRESHOLD    5
 CRGB leds[NUM_LEDS];
 
-// Config for Sonar
+// Config for ultrasonic sensor
 #define echoPin D7 // Echo Pin
 #define trigPin D6 // Trigger Pin
 
@@ -37,36 +37,23 @@ CRGB leds[NUM_LEDS];
 #include "wifiConfig.h"
 #endif
 
-String ssid = SSID;
-String password = WIFI_PASSWORD;
+// Local functions
+void setUpWifi();
+long getDistance();
 
-void setup() {
+//-----------------------------------------------------------------------------
+// setUp
+//
+// Configure the serial port, ultrasonic sensor pins and the FastLED library.
+//-----------------------------------------------------------------------------
+void setup() 
+{
   Serial.begin (9600);
+#if WIFI
+  setUpWifi();
+#endif // WIFI
 
-  // Set the key
-  xxtea.setKey(ENCRYPTION_KEY);
-
-  // Perform Encryption on the Data
-#if GENERATE_ENCRYPTED_WIFI_CONFIG
-  Serial.printf("--Encrypted SSID: %s\n", xxtea.encrypt(SSID).c_str());
-  Serial.printf("--Encrypted password: %s\n", xxtea.encrypt(WIFI_PASSWORD).c_str());
-#endif
-
-  unsigned char pw[MAX_PW_LEN];
-  unsigned char ss[MAX_PW_LEN];
-  // Connect to Wifi
-  WiFi.mode(WIFI_STA);
-  xxtea.decrypt(password).getBytes(pw, MAX_PW_LEN);
-  xxtea.decrypt(ssid).getBytes(ss, MAX_PW_LEN);
-
-  WiFi.begin((const char*)(ss), (const char*)(pw));
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
-    ESP.restart();
-  }
-    
-  // Set up Sonar
+  // Set up ultrasonic sensor
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   
@@ -75,30 +62,14 @@ void setup() {
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
-
-  ArduinoOTA.onStart([]() {
-    Serial.println("Start");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
 }
 
+//-----------------------------------------------------------------------------
+// getDistance
+//
+// Trigger a pulse to the ultrasonic sensor, time the response and convert
+// to cm (approx).
+//-----------------------------------------------------------------------------
 long getDistance()
 {
   long duration = 0;
@@ -115,8 +86,17 @@ long getDistance()
   return distance;
 }
 
-void loop() {
+//-----------------------------------------------------------------------------
+// loop
+//
+// This is the main loop, which will check the distance every 250ms and up-date
+// the LEDs.  It will also check for OTA download if WIFI is enabled.
+//-----------------------------------------------------------------------------
+void loop() 
+{
+#if WIFI  
   ArduinoOTA.handle();
+#endif // WIFI  
   long distance = getDistance();
   long scaledDistance = distance / SCALING;
   int ledsToLight = NUM_LEDS;
@@ -162,4 +142,68 @@ void loop() {
   FastLED.delay(250);
   prevLedsToLight = ledsToLight;
   prevFlashMode = flashMode;
+}
+
+//-----------------------------------------------------------------------------
+// setUpWifi
+//
+// Responsible for connecting to Wifi, initialising the over-air-download
+// handlers.
+// 
+// If GENERATE_ENCRYPTED_WIFI_CONFIG is set to true, will also generate
+// the encrypted wifi configuration data.
+//-----------------------------------------------------------------------------
+void setUpWifi()
+{
+  String ssid = SSID;
+  String password = WIFI_PASSWORD;
+  
+  // Set the key
+  xxtea.setKey(ENCRYPTION_KEY);
+
+  // Perform Encryption on the Data
+#if GENERATE_ENCRYPTED_WIFI_CONFIG
+  Serial.printf("--Encrypted SSID: %s\n", xxtea.encrypt(SSID).c_str());
+  Serial.printf("--Encrypted password: %s\n", xxtea.encrypt(WIFI_PASSWORD).c_str());
+#endif //GENERATE_ENCRYPTED_WIFI_CONFIG
+
+  unsigned char pw[MAX_PW_LEN];
+  unsigned char ss[MAX_PW_LEN];
+  // Connect to Wifi
+  WiFi.mode(WIFI_STA);
+  xxtea.decrypt(password).getBytes(pw, MAX_PW_LEN);
+  xxtea.decrypt(ssid).getBytes(ss, MAX_PW_LEN);
+
+  WiFi.begin((const char*)(ss), (const char*)(pw));
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("Connection Failed! Rebooting...");
+    delay(5000);
+    ESP.restart();
+  }
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+  });
+
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+
+  ArduinoOTA.begin();
+  Serial.println("Ready");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());  
 }

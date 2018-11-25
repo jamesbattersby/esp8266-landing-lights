@@ -26,7 +26,9 @@ Only two additional libraries are required:
 FastLED is required to drive the LED strip, and xxtea-lib is used to provide some protection for your wifi details.
 
 ### Configure Wifi Access
-A template wifi config file is provided.  This file will eventaully contain your encrypted wifi details.  Firstly copy the `include/wifiConfig.tmpl` file to `include/wifiConfig.h`, edit it and add the following detials:
+A template wifi config file is provided.  This file will eventaully contain your encrypted wifi details.  Firstly copy the `include/wifiConfig.tmpl` file to `include/wifiConfig.h`
+
+If you do not want to enable wifi, simply set `WIFI` to be `false`, otherwise add the following detials:
 
 - `SSID` - The SSID of your wifi network
 - `WIFI_PASSWORD` - The access password
@@ -37,7 +39,7 @@ When this is done, you can build and download the code to your Wemos.  Monitorin
 `--Encrypted SSID: 16AFE84BD198AAD3543DBA`<br/>
 `--Encrypted password: 991888FBBAECE5DAE1426DFBC871635DA41D4BD8FFBD44AE112DAE163`
 
-Copy this data and replace your originals in `include/wifiConfig.h`, and change `GENERATE_ENCRYPTED_WIFI_CONFIG` to be 0.
+Copy this data and replace your originals in `include/wifiConfig.h`, and change `GENERATE_ENCRYPTED_WIFI_CONFIG` to be `false`.
 
 If you build and download again, you should see your Wemos connect to you wifi network.
 
@@ -50,3 +52,8 @@ If you build and download again, you should see your Wemos connect to you wifi n
 
 It may look a bit odd that the RX line from the Wemos is going to the LED data line.  This is simply because I decided to use GPIO3, which is labelled RX on the Wemos PCB.
 
+## Installing
+The only thing that needs care is the installation of the ultrasonic sensor, as this can give false readings from reflections off other objects in the garage.  The first thing is to get a mount / enclosure for it.  There are many available from on-line 3D printing stores and eBay.  I found it best to mount the sensor at number plate height.  I used a standard electrical wall box to hold the Wemos.  I know this is obvious, but put some insulating tape over the screws used to fix the mountings to the wall.
+
+## Set-up
+TODO: Add notes on issues and set-up.
