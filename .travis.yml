@@ -18,7 +18,7 @@ install:
     #   https://platformio.org/lib/show/794/xxtea-lib
     #   https://platformio.org/lib/show/126/FastLED
     - platformio lib -g install 126 794
-    - cp inc/wifiConfig.tmpl inc/wifiConfig.h
+    - cp include/wifiConfig.tmpl include/wifiConfig.h
 
 script:
     - platformio run
