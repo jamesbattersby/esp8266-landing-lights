@@ -33,9 +33,24 @@ CRGB leds[NUM_LEDS];
 // Config for WiFi
 #include "wifiConfig.h"
 
+// For MQTT messaging
+#if MQTT
+#include <PubSubClient.h>
+#endif // MQTT
+
 // Local functions
 void setUpWifi();
 long getDistance();
+void mqttCallback(char*, byte*, unsigned int);
+void connectToMqtt();
+
+#if MQTT
+WiFiClient espClient; 
+PubSubClient mqttClient(espClient);
+void notify(int);
+#endif // MQTT
+
+bool doorOpen = true;
 
 //-----------------------------------------------------------------------------
 // setUp
@@ -86,13 +101,22 @@ long getDistance()
 // loop
 //
 // This is the main loop, which will check the distance every 250ms and up-date
-// the LEDs.  It will also check for OTA download if WIFI is enabled.
+// the LEDs.  It will also check for OTA download and MQTT messages if WIFI is 
+// enabled.
 //-----------------------------------------------------------------------------
 void loop() 
 {
 #if WIFI  
   ArduinoOTA.handle();
+#if MQTT
+  if (!mqttClient.connected())
+  {
+    connectToMqtt();
+  }
+  mqttClient.loop();
+#endif // MQTT
 #endif // WIFI  
+
   long distance = getDistance();
   long scaledDistance = distance / SCALING;
   int ledsToLight = NUM_LEDS;
@@ -129,6 +153,17 @@ void loop()
     ledsToLight = NUM_LEDS;
   }
 
+  if (doorOpen == false)
+  {
+    ledsToLight = 0; // Garage door is shut - turn off the LEDs
+  }
+  else
+  {
+#if MQTT
+    notify(int(scaledDistance));
+#endif // MQTT
+  }  
+
   if (prevLedsToLight != ledsToLight || prevFlashMode != flashMode || flashMode)
   {
     fill_solid(&(leds[0]), ledsToLight, colour);
@@ -159,9 +194,11 @@ void setUpWifi()
 
   // Perform Encryption on the Data
 #if GENERATE_ENCRYPTED_WIFI_CONFIG
-  Serial.printf("--Encrypted SSID: %s\n", xxtea.encrypt(SSID).c_str());
-  Serial.printf("--Encrypted password: %s\n", xxtea.encrypt(WIFI_PASSWORD).c_str());
-#endif //GENERATE_ENCRYPTED_WIFI_CONFIG
+  Serial.printf("--Encrypted Wifi SSID: %s\n", xxtea.encrypt(SSID).c_str());
+  Serial.printf("--Encrypted Wifi password: %s\n", xxtea.encrypt(WIFI_PASSWORD).c_str());
+  Serial.printf("--Encrypted MQTT username: %s\n", xxtea.encrypt(MQTT_USERNAME).c_str());
+  Serial.printf("--Encrypted MQTT password: %s\n", xxtea.encrypt(MQTT_PASSWORD).c_str());
+#endif // GENERATE_ENCRYPTED_WIFI_CONFIG
 
   unsigned char pw[MAX_PW_LEN];
   unsigned char ss[MAX_PW_LEN];
@@ -176,6 +213,11 @@ void setUpWifi()
     delay(5000);
     ESP.restart();
   }
+
+#if MQTT
+  mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+  mqttClient.setCallback(mqttCallback);
+#endif // MQTT
 
   ArduinoOTA.onStart([]() {
     Serial.println("Start");
@@ -203,3 +245,81 @@ void setUpWifi()
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());  
 }
+
+#if MQTT
+//-----------------------------------------------------------------------------
+// connectToMqtt
+//
+// Connect the the MQTT server
+//-----------------------------------------------------------------------------
+void connectToMqtt()
+{
+  unsigned char mqttUser[MAX_PW_LEN];
+  unsigned char mqttPassword[MAX_PW_LEN];
+  String username = MQTT_USERNAME;
+  String passwordmqtt = MQTT_PASSWORD;
+  xxtea.decrypt(username).getBytes(mqttUser, MAX_PW_LEN);
+  xxtea.decrypt(passwordmqtt).getBytes(mqttPassword, MAX_PW_LEN);
+  int retry = 20;
+
+  while (!mqttClient.connected() && --retry) 
+  {
+    Serial.println("Connecting to MQTT...");
+
+    if (mqttClient.connect("LandingLights", reinterpret_cast<const char *>(mqttUser), reinterpret_cast<const char *>(mqttPassword))) 
+    {
+      Serial.println("connected");  
+      mqttClient.subscribe("garageDoors");
+    } 
+    else
+    {
+      Serial.print("failed with state ");
+      Serial.println(mqttClient.state());
+      delay(2000);
+    }
+  }
+
+  if (retry == 0)
+  {
+    printf("Failed to connect to MQTT server on %s:%d", MQTT_SERVER, MQTT_PORT);
+  }
+}  
+
+//-----------------------------------------------------------------------------
+// mqttCallback
+//
+// Process a received message
+//-----------------------------------------------------------------------------
+void mqttCallback(char* topic, byte* payload, unsigned int length)
+{
+  if (length > 2 && !strcmp(topic, "garageDoors"))
+  {
+    if (payload[0] == 0x31) // Check for door 1
+    {
+      if (!strncmp((char*)&payload[2], "closed", length - 2))
+      {
+        doorOpen = false;
+      }
+      else
+      {
+        doorOpen = true;
+      }
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// notify
+//
+// Send notification of the car distance to the MQTT server, and to the 
+// serial port.
+//-----------------------------------------------------------------------------
+void notify(int distance)
+{
+  char message[20];
+  sprintf(message, "1:%d", distance);
+  printf("%s\n", message);
+  mqttClient.publish("cardistance", message);
+}
+
+#endif // MQTT

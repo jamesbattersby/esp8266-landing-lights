@@ -10,13 +10,19 @@
 // GENERATE_ENCRYPTED_WIFI_CONFIG to false.
 //
 // If you do not want to enable wifi, set WIFI to false.
+// If you want to disable MQTT messaging, set MQTT to false.
 //
 // Make sure that the wifiConfig.h file is excluded from your source control.
 //-----------------------------------------------------------------------------
 
 #define WIFI true
+#define MQTT true
 #define GENERATE_ENCRYPTED_WIFI_CONFIG true
 #define MAX_PW_LEN 50
 #define SSID ""
 #define WIFI_PASSWORD ""
 #define ENCRYPTION_KEY ""
+#define MQTT_SERVER ""
+#define MQTT_PORT 1883
+#define MQTT_USERNAME ""
+#define MQTT_PASSWORD ""
