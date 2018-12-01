@@ -14,11 +14,11 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
-    - export PLATFORMIO_BUILD_FLAGS="-D TRAVIS_CI"
     # Install the required libraries
     #   https://platformio.org/lib/show/794/xxtea-lib
     #   https://platformio.org/lib/show/126/FastLED
     - platformio lib -g install 126 794
+    - cp inc/wifiConfig.tmpl inc/wifiConfig.h
 
 script:
     - platformio run

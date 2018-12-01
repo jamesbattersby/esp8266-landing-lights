@@ -31,11 +31,7 @@ CRGB leds[NUM_LEDS];
 #define trigPin D6 // Trigger Pin
 
 // Config for WiFi
-#ifdef TRAVIS_CI
-#include "wifiConfig.tmpl"  // Include the blank template if we are building on TravisCI
-#else
 #include "wifiConfig.h"
-#endif
 
 // Local functions
 void setUpWifi();
