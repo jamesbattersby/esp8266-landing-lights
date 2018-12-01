@@ -18,7 +18,7 @@
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS    60
-#define SCALING 7.5 
+#define SCALING 7.5
 #define BRIGHTNESS            10
 #define FRAMES_PER_SECOND    120
 #define YELLOW_THRESHOLD      40
@@ -45,7 +45,7 @@ void mqttCallback(char*, byte*, unsigned int);
 void connectToMqtt();
 
 #if MQTT
-WiFiClient espClient; 
+WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 void notify(int);
 #endif // MQTT
@@ -57,7 +57,7 @@ bool doorOpen = true;
 //
 // Configure the serial port, ultrasonic sensor pins and the FastLED library.
 //-----------------------------------------------------------------------------
-void setup() 
+void setup()
 {
   Serial.begin (9600);
 #if WIFI
@@ -67,7 +67,7 @@ void setup()
   // Set up ultrasonic sensor
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  
+
   // Set up LEDs
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -101,12 +101,12 @@ long getDistance()
 // loop
 //
 // This is the main loop, which will check the distance every 250ms and up-date
-// the LEDs.  It will also check for OTA download and MQTT messages if WIFI is 
+// the LEDs.  It will also check for OTA download and MQTT messages if WIFI is
 // enabled.
 //-----------------------------------------------------------------------------
-void loop() 
+void loop()
 {
-#if WIFI  
+#if WIFI
   ArduinoOTA.handle();
 #if MQTT
   if (!mqttClient.connected())
@@ -115,7 +115,7 @@ void loop()
   }
   mqttClient.loop();
 #endif // MQTT
-#endif // WIFI  
+#endif // WIFI
 
   long distance = getDistance();
   long scaledDistance = distance / SCALING;
@@ -162,13 +162,13 @@ void loop()
 #if MQTT
     notify(int(scaledDistance));
 #endif // MQTT
-  }  
+  }
 
   if (prevLedsToLight != ledsToLight || prevFlashMode != flashMode || flashMode)
   {
     fill_solid(&(leds[0]), ledsToLight, colour);
     fill_solid(&(leds[ledsToLight]), NUM_LEDS - ledsToLight, CRGB(0, 0, 0));
-    FastLED.show();  
+    FastLED.show();
   }
   FastLED.delay(250);
   prevLedsToLight = ledsToLight;
@@ -180,7 +180,7 @@ void loop()
 //
 // Responsible for connecting to Wifi, initialising the over-air-download
 // handlers.
-// 
+//
 // If GENERATE_ENCRYPTED_WIFI_CONFIG is set to true, will also generate
 // the encrypted wifi configuration data.
 //-----------------------------------------------------------------------------
@@ -188,7 +188,7 @@ void setUpWifi()
 {
   String ssid = SSID;
   String password = WIFI_PASSWORD;
-  
+
   // Set the key
   xxtea.setKey(ENCRYPTION_KEY);
 
@@ -243,7 +243,7 @@ void setUpWifi()
   ArduinoOTA.begin();
   Serial.println("Ready");
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  
+  Serial.println(WiFi.localIP());
 }
 
 #if MQTT
@@ -262,15 +262,15 @@ void connectToMqtt()
   xxtea.decrypt(passwordmqtt).getBytes(mqttPassword, MAX_PW_LEN);
   int retry = 20;
 
-  while (!mqttClient.connected() && --retry) 
+  while (!mqttClient.connected() && --retry)
   {
     Serial.println("Connecting to MQTT...");
 
-    if (mqttClient.connect("LandingLights", reinterpret_cast<const char *>(mqttUser), reinterpret_cast<const char *>(mqttPassword))) 
+    if (mqttClient.connect("LandingLights", reinterpret_cast<const char *>(mqttUser), reinterpret_cast<const char *>(mqttPassword)))
     {
-      Serial.println("connected");  
+      Serial.println("connected");
       mqttClient.subscribe("garageDoors");
-    } 
+    }
     else
     {
       Serial.print("failed with state ");
@@ -283,7 +283,7 @@ void connectToMqtt()
   {
     printf("Failed to connect to MQTT server on %s:%d", MQTT_SERVER, MQTT_PORT);
   }
-}  
+}
 
 //-----------------------------------------------------------------------------
 // mqttCallback
@@ -311,7 +311,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 //-----------------------------------------------------------------------------
 // notify
 //
-// Send notification of the car distance to the MQTT server, and to the 
+// Send notification of the car distance to the MQTT server, and to the
 // serial port.
 //-----------------------------------------------------------------------------
 void notify(int distance)
