@@ -18,12 +18,12 @@
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 #define NUM_LEDS    60
-#define SCALING 7.5
+#define SCALING 4
 #define BRIGHTNESS            10
 #define FRAMES_PER_SECOND    120
 #define YELLOW_THRESHOLD      40
 #define RED_THRESHOLD         20
-#define RED_FLASH_THRESHOLD    5
+#define RED_FLASH_THRESHOLD    3
 CRGB leds[NUM_LEDS];
 
 // Config for ultrasonic sensor
@@ -51,6 +51,7 @@ void notify(int);
 #endif // MQTT
 
 bool doorOpen = true;
+int lastDistance = 0;
 
 //-----------------------------------------------------------------------------
 // setUp
@@ -59,7 +60,7 @@ bool doorOpen = true;
 //-----------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin (9600);
+  Serial.begin (115200);
 #if WIFI
   setUpWifi();
 #endif // WIFI
@@ -160,7 +161,7 @@ void loop()
   else
   {
 #if MQTT
-    notify(int(scaledDistance));
+    notify((int)scaledDistance);
 #endif // MQTT
   }
 
@@ -173,6 +174,7 @@ void loop()
   FastLED.delay(250);
   prevLedsToLight = ledsToLight;
   prevFlashMode = flashMode;
+  lastDistance = (int)scaledDistance;
 }
 
 //-----------------------------------------------------------------------------
@@ -270,6 +272,7 @@ void connectToMqtt()
     {
       Serial.println("connected");
       mqttClient.subscribe("garageDoors");
+      mqttClient.subscribe("carDistanceQuery");
     }
     else
     {
@@ -306,6 +309,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
       }
     }
   }
+  else if (!strcmp(topic, "carDistanceQuery"))
+  {
+    notify(lastDistance);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -319,7 +326,7 @@ void notify(int distance)
   char message[20];
   sprintf(message, "1:%d", distance);
   printf("%s\n", message);
-  mqttClient.publish("cardistance", message);
+  mqttClient.publish("carDistance", message);
 }
 
 #endif // MQTT
