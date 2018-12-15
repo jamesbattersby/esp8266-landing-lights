@@ -1,22 +1,28 @@
 //-----------------------------------------------------------------------------
 //
-// Edit this file and enter your encrypted wifi ssid, password and encryption 
+// Edit this file and enter your encrypted wifi ssid, password and encryption
 // key.
 //
 // To generate the encrypted versions of your data, set GENERATE_ENCRYPTED_WIFI_CONFIG
-// to true and enter the your actual ssid and password along with a key to 
-// encrypt them with. Compile and run, and your encrypted versions will be 
-// printed out.  Update this file with the results set 
+// to true and enter the your actual ssid and password along with a key to
+// encrypt them with. Compile and run, and your encrypted versions will be
+// printed out.  Update this file with the results set
 // GENERATE_ENCRYPTED_WIFI_CONFIG to false.
 //
 // If you do not want to enable wifi, set WIFI to false.
+// If you want to disable MQTT messaging, set MQTT to false.
 //
 // Make sure that the wifiConfig.h file is excluded from your source control.
 //-----------------------------------------------------------------------------
 
 #define WIFI true
+#define MQTT true
 #define GENERATE_ENCRYPTED_WIFI_CONFIG true
 #define MAX_PW_LEN 50
 #define SSID ""
 #define WIFI_PASSWORD ""
 #define ENCRYPTION_KEY ""
+#define MQTT_SERVER ""
+#define MQTT_PORT 1883
+#define MQTT_USERNAME ""
+#define MQTT_PASSWORD ""
