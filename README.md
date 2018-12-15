@@ -21,7 +21,7 @@ The code also includes over-air-update capability.
 I've used Visual Studio Code and Platformio, but this will work equally well with the Arduino IDE.
 
 ### Install The Libraries
-Only two additional libraries are required:
+Only three additional libraries are required:
 - FastLED
 - xxtea-lib
 - PubSubClient
