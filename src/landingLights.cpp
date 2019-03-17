@@ -324,7 +324,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
 void notify(int distance)
 {
   char message[20];
-  sprintf(message, "1:%d", distance);
+  sprintf(message, "1:%d", distance > NUM_LEDS ? NUM_LEDS : distance);
   printf("%s\n", message);
   mqttClient.publish("carDistance", message);
 }
