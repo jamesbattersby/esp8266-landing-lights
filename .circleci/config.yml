@@ -1,0 +1,23 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.10.4
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: "Install packages"
+          command: "pip install -U platformio"
+      - run:
+          name: "Copy Config"
+          command: "cp include/wifiConfig.tmpl include/wifiConfig.h"
+      - run:
+          name: "Build"
+          command: "platformio run"
+
+workflows:
+  build-workflow:
+    jobs:
+      - build
